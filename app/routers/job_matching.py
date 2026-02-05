@@ -3,7 +3,7 @@ from typing import List
 import logging
 
 from app.services.job_matching_service import JobMatchingService
-from app.schemas.matching import JobMatchRequest, JobMatchResponse
+from app.schemas.matching import JobMatchRequest, JobMatchResponse, SimilarityRequest
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ async def match_candidates(job_id: str, limit: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/similarity-score")
-async def calculate_similarity(job_description: str, resume_text: str):
+async def calculate_similarity(request: SimilarityRequest):
     """
     Calculate similarity score between job and resume
     
@@ -67,8 +67,8 @@ async def calculate_similarity(job_description: str, resume_text: str):
     """
     try:
         score = await matching_service.calculate_similarity(
-            job_description,
-            resume_text
+            request.job_description,
+            request.resume_text
         )
         
         return {"similarity_score": score}

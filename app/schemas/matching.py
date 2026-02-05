@@ -13,3 +13,7 @@ class JobMatchResponse(BaseModel):
     match_score: float
     matching_skills: List[str]
     missing_skills: List[str]
+
+class SimilarityRequest(BaseModel):
+    job_description: str
+    resume_text: str
