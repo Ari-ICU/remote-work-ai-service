@@ -31,8 +31,15 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
     
     # Celery
-    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = ""
+    CELERY_RESULT_BACKEND: str = ""
+    
+    def __init__(self, **values):
+        super().__init__(**values)
+        if not self.CELERY_BROKER_URL:
+            self.CELERY_BROKER_URL = f"{self.REDIS_URL}/0"
+        if not self.CELERY_RESULT_BACKEND:
+            self.CELERY_RESULT_BACKEND = f"{self.REDIS_URL}/0"
     
     class Config:
         env_file = ".env"
