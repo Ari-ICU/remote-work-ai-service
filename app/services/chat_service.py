@@ -5,74 +5,111 @@ class ChatService:
     def __init__(self):
         self.knowledge_base = {
             "jobs": [
-                "I can help you find remote, freelance, and full-time jobs across Cambodia.",
-                "Currently, we have many openings in Software Development, Graphic Design, and Digital Marketing.",
-                "To find the best matches, try searching for specific skills like 'React', 'Node.js', or 'Figma' in our job portal."
+                "I can definitely help you find work! We have quite a few remote and freelance opportunities across Cambodia right now.",
+                "Searching for a job? You're in the right place. Have you looked at our development or design sections yet?",
+                "There are some great freelance openings lately. I'd recommend searching for specific skills like 'React' or 'Node' to find the best fit."
             ],
             "pricing": [
-                "KhmerWork is 100% free for job seekers. You will never be charged for apply to jobs.",
-                "For employers, we offer a Free tier (1 active post) and Premium tiers starting from $29/month for multiple featured posts.",
-                "Payment can be made via ABA, Wing, or ACLEDA for your convenience."
+                "Great question! KhmerWork is actually 100% free for job seekers. You'll never have to pay a cent to apply.",
+                "Pricing-wise, we keep it free for talent. Employers have premium options starting at $29/month, but searching is always free for you!",
+                "You can apply to as many jobs as you want for free. We support payments via ABA or Wing if you're an employer looking for premium features."
             ],
             "contact": [
-                "You can reach our support team at support@khmerwork.com.",
-                "Our office is located in Phnom Penh, but we operate primarily as a remote-first platform.",
-                "Follow us on Telegram and Facebook for the latest platform updates."
+                "You can always reach out to our team at support@khmerwork.com. They're super responsive!",
+                "Our main office is in Phnom Penh, though we're a remote-first platform. Need help with something specific?",
+                "Feel free to drop us an email or follow our Telegram channel for the quickest updates."
             ],
             "hiring": [
-                "To hire talent, first create an Employer account.",
-                "Our AI helps you filter through hundreds of resumes to find the top 1% of candidates.",
-                "Featured job postings get 5x more applications and are pinned to the top of search results."
+                "Looking to hire? That's awesome! You just need to create an Employer account to get started.",
+                "Our AI actually helps you filter resumes so you find the best talent faster. It's a huge time-saver.",
+                "Featured posts really help! They get about 5x more visibility. Would you like to know more about our employer tiers?"
             ],
             "profile": [
-                "A complete profile increases your chances of getting hired by 3x.",
-                "Make sure to add your skills and portfolio to stand out.",
-                "Our AI can analyze your resume and suggest improvements."
+                "Pro tip: A complete profile makes you 3x more likely to get hired. Have you added your portfolio yet?",
+                "I definitely recommend uploading a clean resume. Our AI can even scan it to help match you with the best roles!",
+                "Make sure your skills section is up to date. It really helps employers find you in the search results."
             ],
             "ai": [
-                "I use advanced AI to match your skills with the best job opportunities.",
-                "I can also help you generate professional job descriptions.",
-                "Currently, I'm learning more about the Cambodian job market every day!"
+                "I'm the platform's AI assistant! I use some pretty cool matching algorithms to connect talent with the right jobs.",
+                "Basically, I analyze skills and job descriptions to make sure everyone finds their perfect match.",
+                "I'm constantly learning from how people use the platform to get even better at recommending jobs!"
             ]
         }
         
-        self.greetings = ["Hello! How can I help you navigate KhmerWork today?", "Hi! Looking for a job or looking to hire?", "Greetings! I'm your AI assistant. What's on your mind?"]
+        self.fillers = [
+            "Let me check that for you...",
+            "Oh, I can help with that!",
+            "That's a great question.",
+            "Sure thing!",
+            "I'd be happy to explain.",
+            "Interesting! Here's the deal:",
+        ]
+
+        self.closers = [
+            "Does that make sense?",
+            "Is there anything else I can help you with?",
+            "Hope that helps! Anything else?",
+            "Want to know more about that?",
+            "I'm here if you have more questions!",
+        ]
+
+        self.greetings = [
+            "Hey! How's your day going? How can I help you on KhmerWork?",
+            "Hi there! Looking for a new opportunity today?",
+            "Hello! I'm your AI assistant. What can I do for you?",
+            "Greetings! Ready to find your next big project?",
+        ]
+
         self.unknown = [
-            "I'm still learning about that specific topic. Would you like to know about available jobs, pricing, or how to improve your profile?",
-            "That's a great question! While I don't have the exact answer yet, I can assist you with job searching or profile optimization.",
-            "I'm not sure about that. Try asking me about 'how to find jobs' or 'pricing for employers'."
+            "Hmm, I'm not entirely sure about that yet. I'm still learning!",
+            "That's a bit out of my current knowledge base. Want to talk about jobs or pricing instead?",
+            "I didn't quite catch that. Could you try rephrasing? I can help with job searches, profiles, and more.",
         ]
 
     async def get_response(self, message: str) -> str:
-        message = message.lower()
+        message = message.lower().strip()
         
-        # Priority mapping
-        patterns = {
-            "hi": self.greetings,
-            "hello": self.greetings,
-            "hey": self.greetings,
-            "job": self.knowledge_base["jobs"],
-            "work": self.knowledge_base["jobs"],
-            "find": self.knowledge_base["jobs"],
-            "price": self.knowledge_base["pricing"],
-            "cost": self.knowledge_base["pricing"],
-            "free": self.knowledge_base["pricing"],
-            "pay": self.knowledge_base["pricing"],
-            "contact": self.knowledge_base["contact"],
-            "support": self.knowledge_base["contact"],
-            "email": self.knowledge_base["contact"],
-            "hire": self.knowledge_base["hiring"],
-            "employer": self.knowledge_base["hiring"],
-            "post": self.knowledge_base["hiring"],
-            "profile": self.knowledge_base["profile"],
-            "resume": self.knowledge_base["profile"],
-            "cv": self.knowledge_base["profile"],
-            "ai": self.knowledge_base["ai"],
-            "smart": self.knowledge_base["ai"]
-        }
+        if not message:
+            return "I'm listening! What can I help you with?"
 
-        for keyword, responses in patterns.items():
-            if keyword in message:
-                return random.choice(responses)
+        # Intent detection
+        intent = self._detect_intent(message)
+        
+        # Build response
+        if intent == "greeting":
+            return random.choice(self.greetings)
+        
+        if intent in self.knowledge_base:
+            main_response = random.choice(self.knowledge_base[intent])
+            
+            # Occasionally add a filler or closer to sound more human
+            if random.random() > 0.5:
+                filler = random.choice(self.fillers)
+                return f"{filler} {main_response}"
+            
+            if random.random() > 0.7:
+                closer = random.choice(self.closers)
+                return f"{main_response} {closer}"
+            
+            return main_response
             
         return random.choice(self.unknown)
+
+    def _detect_intent(self, message: str) -> str:
+        # Simple rule-based intent detection
+        patterns = {
+            "greeting": ["hi", "hello", "hey", "greetings", "good morning", "good afternoon"],
+            "jobs": ["job", "work", "find", "remote", "freelance", "opportunity", "opening"],
+            "pricing": ["price", "cost", "pay", "free", "tier", "subscription", "money"],
+            "contact": ["contact", "support", "email", "help", "reach", "office", "telegram"],
+            "hiring": ["hire", "employer", "post", "candidate", "talent", "recruitment"],
+            "profile": ["profile", "resume", "cv", "portfolio", "skills", "experience"],
+            "ai": ["ai", "smart", "how do you work", "assistant", "bot"]
+        }
+
+        # Check for direct matches
+        for intent, keywords in patterns.items():
+            if any(keyword in message for keyword in keywords):
+                return intent
+                
+        return "unknown"
