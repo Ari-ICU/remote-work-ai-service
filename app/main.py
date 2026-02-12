@@ -18,8 +18,22 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
     logger.info("🤖 AI Service starting up...")
-    logger.info("Loading ML models...")
-    # TODO: Load models here
+    logger.info("Checking for trained models...")
+    
+    import os
+    model_path = "app/ml_models/salary_model.joblib"
+    intent_model_path = "app/ml_models/intent_model.joblib"
+    
+    if os.path.exists(model_path):
+        logger.info(f"✅ Found trained salary model at {model_path}")
+    else:
+        logger.warning("⚠️ No trained salary model found.")
+        
+    if os.path.exists(intent_model_path):
+        logger.info(f"✅ Found trained intent model at {intent_model_path}")
+    else:
+        logger.warning("⚠️ No trained intent model found. Chat will use rule-based fallback.")
+        
     yield
     # Shutdown
     logger.info("🛑 AI Service shutting down...")
