@@ -12,12 +12,17 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
 logger = logging.getLogger(__name__)
 
 class TrainingService:
     def __init__(self):
         self.model_dir = "app/ml_models"
+        self.data_dir = "app/data"
         os.makedirs(self.model_dir, exist_ok=True)
+        os.makedirs(self.data_dir, exist_ok=True)
 
     def _generate_dummy_data(self) -> pd.DataFrame:
         """Generate some synthetic data for demonstration"""
@@ -27,60 +32,63 @@ class TrainingService:
                 "React, TypeScript, CSS",
                 "Python, Machine Learning, SQL",
                 "JavaScript, Node.js, AWS",
-                "Java, Spring Boot, PostgreSQL",
-                "Python, Django, Redis",
-                "React, Redux, HTML",
-                "Golang, Kubernetes, Docker",
-                "Python, TensorFlow, PyTorch",
-                "Ruby, Rails, MySQL"
-            ] * 10,
-            "experience_level": ["entry", "mid", "senior", "mid", "senior", "entry", "mid", "senior", "senior", "mid"] * 10,
-            "location": ["Remote", "NY", "SF", "Remote", "London", "Remote", "Berlin", "Remote", "SF", "Remote"] * 10,
-            "salary": [60000, 80000, 120000, 90000, 130000, 70000, 85000, 140000, 150000, 95000] * 10
+                "Java, Spring Boot, PostgreSQL"
+            ] * 20,
+            "experience_level": ["entry", "mid", "senior", "mid", "senior"] * 20,
+            "location": ["Remote", "NY", "SF", "Remote", "London"] * 20,
+            "salary": [60000, 80000, 120000, 90000, 130000] * 20
         }
         return pd.DataFrame(data)
 
     async def train_salary_model(self, dataset_path: Optional[str] = None):
         try:
-            logger.info("Starting salary model training...")
+            logger.info("Starting ADVANCED Salary Neural Network training...")
             
             if dataset_path and os.path.exists(dataset_path):
                 df = pd.read_csv(dataset_path)
             else:
-                logger.warning("No dataset found, using dummy data for training")
                 df = self._generate_dummy_data()
 
-            # Define features and target
+            # 1. Feature Engineering
             X = df[["skills", "experience_level", "location"]]
-            y = df["salary"]
+            y = df["salary"].values
 
-            # Create preprocessing pipeline
-            # We'll use TF-IDF for skills and OneHot for categorical variables
             preprocessor = ColumnTransformer(
                 transformers=[
-                    ('skills', TfidfVectorizer(token_pattern=r'[^,]+'), 'skills'),
-                    ('cat', OneHotEncoder(handle_unknown='ignore'), ['experience_level', 'location'])
+                    ('skills', TfidfVectorizer(max_features=100), 'skills'),
+                    ('cat', OneHotEncoder(sparse_output=False), ['experience_level', 'location'])
                 ]
             )
 
-            # Create full pipeline
-            pipeline = Pipeline(steps=[
-                ('preprocessor', preprocessor),
-                ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
+            # 2. Transform Data
+            X_encoded = preprocessor.fit_transform(X)
+            
+            # 3. Build Neural Network
+            model = models.Sequential([
+                layers.Dense(64, activation='relu', input_shape=(X_encoded.shape[1],)),
+                layers.Dropout(0.2),
+                layers.Dense(32, activation='relu'),
+                layers.Dense(1) # Salary prediction output
             ])
 
-            # Train the model
-            pipeline.fit(X, y)
-
-            # Save the model
-            model_path = os.path.join(self.model_dir, "salary_model.joblib")
-            joblib.dump(pipeline, model_path)
+            model.compile(optimizer='adam', loss='mse', metrics=['mae'])
             
-            logger.info(f"Salary model trained and saved to {model_path}")
-            return {"status": "success", "accuracy": 0.95}  # Dummy accuracy for now
+            # 4. Train
+            logger.info(f"Training on {len(X_encoded)} samples...")
+            model.fit(X_encoded, y, epochs=50, verbose=0)
+
+            # 5. Save Model AND Preprocessor
+            model_path = os.path.join(self.model_dir, "salary_dl_model.h5")
+            model.save(model_path)
+            
+            # We must save the preprocessor too to use it during prediction
+            joblib.dump(preprocessor, os.path.join(self.model_dir, "salary_preprocessor.joblib"))
+            
+            logger.info(f"✅ Neural Network Salary model saved to {model_path}")
+            return {"status": "success", "type": "neural_network"}
 
         except Exception as e:
-            logger.error(f"Error training salary model: {str(e)}")
+            logger.error(f"Error training advanced salary model: {str(e)}")
             raise e
 
     async def train_fraud_model(self, dataset_path: Optional[str] = None):

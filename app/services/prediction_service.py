@@ -9,54 +9,78 @@ logger = logging.getLogger(__name__)
 class PredictionService:
     def __init__(self):
         self.model_path = "app/ml_models/salary_model.joblib"
+        self.dl_model_path = "app/ml_models/salary_dl_model.h5"
+        self.preprocessor_path = "app/ml_models/salary_preprocessor.joblib"
+        
         self.model = self._load_model()
+        self.dl_model = self._load_dl_model()
+        self.preprocessor = self._load_preprocessor()
 
     def _load_model(self):
         try:
             if os.path.exists(self.model_path):
-                logger.info(f"Loading model from {self.model_path}")
                 return joblib.load(self.model_path)
-            else:
-                logger.warning(f"No model found at {self.model_path}, using fallback logic")
-                return None
+            return None
         except Exception as e:
-            logger.error(f"Error loading model: {str(e)}")
+            logger.error(f"Error loading scikit model: {e}")
+            return None
+
+    def _load_dl_model(self):
+        try:
+            if os.path.exists(self.dl_model_path):
+                import tensorflow as tf
+                return tf.keras.models.load_model(self.dl_model_path)
+            return None
+        except Exception as e:
+            logger.error(f"Error loading DL model: {e}")
+            return None
+
+    def _load_preprocessor(self):
+        try:
+            if os.path.exists(self.preprocessor_path):
+                return joblib.load(self.preprocessor_path)
+            return None
+        except Exception as e:
+            logger.error(f"Error loading preprocessor: {e}")
             return None
 
     async def predict_salary(self, skills: List[str], experience_level: str, location: str, job_type: str) -> Dict[str, Any]:
+        skills_str = ", ".join(skills)
+        input_data = pd.DataFrame([{
+            "skills": skills_str,
+            "experience_level": experience_level,
+            "location": location
+        }])
+
+        # 1. Try Deep Learning model first
+        if self.dl_model and self.preprocessor:
+            try:
+                X_encoded = self.preprocessor.transform(input_data)
+                prediction = float(self.dl_model.predict(X_encoded)[0][0])
+                return self._format_response(prediction, 0.95, "deep_learning")
+            except Exception as e:
+                logger.error(f"DL Prediction failed: {e}")
+
+        # 2. Try Scikit-learn model second
         if self.model:
             try:
-                # Prepare input for prediction
-                # Skills should be comma-separated string
-                skills_str = ", ".join(skills)
-                input_df = pd.DataFrame([{
-                    "skills": skills_str,
-                    "experience_level": experience_level,
-                    "location": location
-                }])
-                
-                prediction = self.model.predict(input_df)[0]
-                
-                return {
-                    "estimated_salary": float(prediction),
-                    "currency": "USD",
-                    "confidence_score": 0.85,
-                    "range": {
-                        "min": float(prediction * 0.9),
-                        "max": float(prediction * 1.1)
-                    }
-                }
+                prediction = float(self.model.predict(input_data)[0])
+                return self._format_response(prediction, 0.85, "random_forest")
             except Exception as e:
-                logger.error(f"Prediction failed: {str(e)}")
+                logger.error(f"Scikit Prediction failed: {e}")
         
-        # Fallback to hardcoded values if model is missing or fails
+        # 3. Last Fallback
+        return self._format_response(85000, 0.5, "fallback")
+
+    def _format_response(self, value: float, confidence: float, model_type: str) -> Dict[str, Any]:
         return {
-            "estimated_salary": 85000,
+            "estimated_salary": value,
             "currency": "USD",
-            "confidence_score": 0.85,
+            "confidence_score": confidence,
+            "model_used": model_type,
             "range": {
-                "min": 75000,
-                "max": 95000
+                "min": value * 0.9,
+                "max": value * 1.1
             }
         }
 

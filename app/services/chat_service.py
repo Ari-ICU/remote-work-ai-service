@@ -3,6 +3,8 @@ import joblib
 import random
 import logging
 from typing import Dict, List
+from app.utils.config import settings
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +12,8 @@ class ChatService:
     def __init__(self):
         self.model_path = "app/ml_models/intent_model.joblib"
         self.model = self._load_model()
+        self.api_key = settings.OPENAI_API_KEY
+        self.client = OpenAI(api_key=self.api_key) if self.api_key else None
         
         self.knowledge_base = {
             "jobs": [
@@ -155,6 +159,23 @@ class ChatService:
             
             return main_response
             
+        # 4. Final Fallback: Ask OpenAI for an intelligent answer
+        if self.client:
+            try:
+                logger.info(f"Using OpenAI fallback for message: {message[:50]}...")
+                response = self.client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": f"You are the AI assistant for KhmerWork, a premium freelance platform in Cambodia. Use this info to help: {str(self.knowledge_base)}. Be helpful, professional, and concise. If you don't know something about the platform specifically, give a general helpful freelance advice."},
+                        {"role": "user", "content": message}
+                    ],
+                    temperature=0.7,
+                    max_tokens=150
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                logger.error(f"OpenAI Chat fallback failed: {e}")
+
         return random.choice(self.unknown)
 
     def _detect_intent_rules(self, message: str) -> str:
