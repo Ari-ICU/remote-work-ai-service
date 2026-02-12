@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.routers import resume_parser, job_matching, predictions, training, chat
+from app.routers import resume_parser, job_matching, predictions, training, chat, generation
 from app.utils.config import settings
 
 # Configure logging
@@ -63,6 +63,7 @@ app.include_router(job_matching.router, prefix="/api/ai/matching", tags=["Job Ma
 app.include_router(predictions.router, prefix="/api/ai/predictions", tags=["Predictions"])
 app.include_router(training.router, prefix="/api/ai/training", tags=["Model Training"])
 app.include_router(chat.router, prefix="/api/ai/chat", tags=["AI Chat"])
+app.include_router(generation.router, prefix="/api/ai/generation", tags=["AI Generation"])
 
 @app.get("/")
 async def root():

@@ -38,7 +38,7 @@ class PredictionService:
                 prediction = self.model.predict(input_df)[0]
                 
                 return {
-                    "predicted_salary": float(prediction),
+                    "estimated_salary": float(prediction),
                     "currency": "USD",
                     "confidence_score": 0.85,
                     "range": {
@@ -51,7 +51,7 @@ class PredictionService:
         
         # Fallback to hardcoded values if model is missing or fails
         return {
-            "predicted_salary": 85000,
+            "estimated_salary": 85000,
             "currency": "USD",
             "confidence_score": 0.85,
             "range": {
