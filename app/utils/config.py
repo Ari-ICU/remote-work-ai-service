@@ -1,53 +1,30 @@
 from pydantic_settings import BaseSettings
-from functools import lru_cache
+from typing import Optional, List
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Settings(BaseSettings):
-    """Application settings"""
+    APP_NAME: str = "Freelance Platform AI Service"
+    API_V1_STR: str = "/api/v1"
     
-    # Database
-    DATABASE_URL: str = "postgresql://freelance_user:freelance_pass@localhost:5432/freelance_platform"
-    
-    # Redis
-    REDIS_URL: str = "redis://localhost:6379"
-    
-    # AI/ML
-    MODEL_PATH: str = "./app/ml_models"
-    HUGGINGFACE_TOKEN: str = ""
+    # AI Models
+    INTENT_MODEL_PATH: str = "app/ml_models/intent_model.joblib"
+    SALARY_MODEL_PATH: str = "app/ml_models/salary_model.pkl"
+    MATCHING_MODEL_PATH: str = "app/ml_models/matching_model.pkl"
     
     # OpenAI
-    OPENAI_API_KEY: str = ""
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     
-    # Vector DB
-    PINECONE_API_KEY: str = ""
-    PINECONE_ENVIRONMENT: str = "us-east-1-aws"
-    PINECONE_INDEX_NAME: str = "freelance-jobs"
+    # Redis & Celery
+    CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
     
-    # App
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = True
-    LOG_LEVEL: str = "INFO"
-    
-    # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
-    
-    # Celery
-    CELERY_BROKER_URL: str = ""
-    CELERY_RESULT_BACKEND: str = ""
-    
-    def __init__(self, **values):
-        super().__init__(**values)
-        if not self.CELERY_BROKER_URL:
-            self.CELERY_BROKER_URL = f"{self.REDIS_URL}/0"
-        if not self.CELERY_RESULT_BACKEND:
-            self.CELERY_RESULT_BACKEND = f"{self.REDIS_URL}/0"
-    
+    # Cors
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+
     class Config:
         env_file = ".env"
-        case_sensitive = True
 
-@lru_cache()
-def get_settings() -> Settings:
-    """Get cached settings instance"""
-    return Settings()
-
-settings = get_settings()
+settings = Settings()
