@@ -17,7 +17,8 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     "http://localhost:3001",
-    "https://freelance-platform-frontend.vercel.app", # Adjust as needed
+    "https://remote-work-frontend-flame.vercel.app",
+    "https://freelance-backend.onrender.com",
     "*" # Allow all for now, restrict in production
 ]
 
