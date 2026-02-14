@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import chat, generation, training
-# from app.routers import job_matching # Commented out if not ready or use if available
+from app.routers import chat, generation, training, predictions, job_matching, resume_parser
 import uvicorn
 import os
 
@@ -38,13 +37,18 @@ async def root():
 async def health_check():
     return {"status": "ok"}
 
-# Include routers
-app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
-app.include_router(generation.router, prefix="/api/v1/generation", tags=["Generation"])
-app.include_router(training.router, prefix="/api/v1/training", tags=["Training"])
+# Include routers - Mapped to match NestJS backend expectations
+app.include_router(chat.router, prefix="/api/ai/chat", tags=["Chat"])
+app.include_router(generation.router, prefix="/api/ai/generation", tags=["Generation"])
+app.include_router(training.router, prefix="/api/ai/training", tags=["Training"])
+app.include_router(predictions.router, prefix="/api/ai/predictions", tags=["Predictions"])
+app.include_router(job_matching.router, prefix="/api/ai/matching", tags=["Matching"])
+app.include_router(resume_parser.router, prefix="/api/ai/resume", tags=["Resume"])
 
-# Add other routers as needed
-# app.include_router(job_matching.router, prefix="/api/v1/matching", tags=["Matching"])
+# Legacy v1 prefixes for backward compatibility if any
+app.include_router(chat.router, prefix="/api/v1/chat", tags=["Legacy Chat"])
+app.include_router(generation.router, prefix="/api/v1/generation", tags=["Legacy Generation"])
+app.include_router(training.router, prefix="/api/v1/training", tags=["Legacy Training"])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
