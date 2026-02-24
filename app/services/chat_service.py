@@ -112,11 +112,11 @@ class ChatService:
             logger.error(f"Error loading intent model: {str(e)}")
             return None
 
-    async def get_response(self, message: str) -> str:
+    async def get_response(self, message: str, locale: str = "en") -> str:
         message_low = message.lower().strip()
         
         if not message_low:
-            return "I'm listening! What can I help you with?"
+            return "តើខ្ញុំអាចជួយអ្វីអ្នកបាន?" if locale == "km" else "I'm listening! What can I help you with?"
 
         # 1. Use ML model for intent detection if available
         intent = "unknown"
@@ -142,6 +142,8 @@ class ChatService:
         
         # 3. Build response with human-like touches
         if intent == "greeting":
+            if locale == "km":
+                return random.choice(["សួស្ដី! តើថ្ងៃនេះអ្នកសុខសប្បាយជាទេ? តើខ្ញុំអាចជួយអ្វីអ្នកបាននៅក្នុង KhmerWork?", "សួស្ដី! តើអ្នកកំពុងស្វែងរកឱកាសថ្មីមែនទេ?", "សួស្ដី! ខ្ញុំជាជំនួយការ AI របស់អ្នក។ តើខ្ញុំអាចបម្រើអ្វីអ្នកបាន?"])
             return random.choice(self.greetings)
         
         if intent in self.knowledge_base:
@@ -162,11 +164,12 @@ class ChatService:
         # 4. Final Fallback: Ask OpenAI for an intelligent answer
         if self.client:
             try:
-                logger.info(f"Using OpenAI fallback for message: {message[:50]}...")
+                logger.info(f"Using OpenAI fallback for message: {message[:50]}... Locale: {locale}")
+                lang_instruction = "Respond in Khmer language." if locale == "km" else "Respond in English."
                 response = self.client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
-                        {"role": "system", "content": f"You are the AI assistant for KhmerWork, a premium freelance platform in Cambodia. Use this info to help: {str(self.knowledge_base)}. Be helpful, professional, and concise. If you don't know something about the platform specifically, give a general helpful freelance advice."},
+                        {"role": "system", "content": f"You are the AI assistant for KhmerWork, a premium freelance platform in Cambodia. {lang_instruction} Use this info to help: {str(self.knowledge_base)}. Be helpful, professional, and concise. If you don't know something about the platform specifically, give a general helpful freelance advice."},
                         {"role": "user", "content": message}
                     ],
                     temperature=0.7,
@@ -176,17 +179,19 @@ class ChatService:
             except Exception as e:
                 logger.error(f"OpenAI Chat fallback failed: {e}")
 
+        if locale == "km":
+            return random.choice(["ហ៊ឹម ខ្ញុំមិនទាន់ច្បាស់អំពីចំណុចនោះនៅឡើយទេ។ ខ្ញុំកំពុងរៀនបន្ថែម!", "នោះហួសពីអ្វីដែលខ្ញុំដឹងនៅពេលនេះ។ ចង់និយាយអំពីការងារ ឬតម្លៃជំនួសវិញទេ?", "ខ្ញុំមិនសូវយល់ទេ។ តើអ្នកអាចសាកល្បងនិយាយម្ដងទៀតបានទេ?"])
         return random.choice(self.unknown)
 
     def _detect_intent_rules(self, message: str) -> str:
         patterns = {
-            "greeting": ["hi", "hello", "hey", "greetings", "good morning", "good afternoon"],
-            "jobs": ["job", "work", "find", "remote", "freelance", "opportunity", "opening"],
-            "pricing": ["price", "cost", "pay", "free", "tier", "subscription", "money"],
-            "contact": ["contact", "support", "email", "help", "reach", "office", "telegram"],
-            "hiring": ["hire", "employer", "post", "candidate", "talent", "recruitment"],
-            "profile": ["profile", "resume", "cv", "portfolio", "skills", "experience"],
-            "ai": ["ai", "smart", "how do you work", "assistant", "bot"]
+            "greeting": ["hi", "hello", "hey", "greetings", "សួស្ដី", "ជម្រាបសួរ", "សុខសប្បាយ"],
+            "jobs": ["job", "work", "find", "remote", "freelance", "ការងារ", "រកការងារ", "ស្វែងរក"],
+            "pricing": ["price", "cost", "pay", "free", "តម្លៃ", "លុយ", "បង់"],
+            "contact": ["contact", "support", "email", "ទំនាក់ទំនង", "ជំនួយ", "ផ្ញើសារ"],
+            "hiring": ["hire", "employer", "post", "រើសបុគ្គលិក", "ជួល", "ប្រកាស"],
+            "profile": ["profile", "resume", "cv", "ប្រវត្តិរូប", "ជំនាញ"],
+            "ai": ["ai", "bot", "assistant", "ជំនួយការ", "ឆ្លាត"]
         }
 
         for intent, keywords in patterns.items():
