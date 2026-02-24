@@ -22,7 +22,7 @@ class GenerationService:
         """Generate a personalized job proposal/cover letter"""
         
         if not self.client:
-            return self._mock_proposal(job_title, user_skills)
+            return self._mock_proposal(job_title, job_description, user_skills)
 
         prompt = f"""
         Role: Expert Freelance Career Coach
@@ -53,7 +53,7 @@ class GenerationService:
             return response.choices[0].message.content
         except Exception as e:
             logger.error(f"Error generating proposal: {e}")
-            return self._mock_proposal(job_title, user_skills)
+            return self._mock_proposal(job_title, job_description, user_skills)
 
     async def generate_job_description(
         self,
@@ -133,9 +133,31 @@ class GenerationService:
             logger.error(f"Error generating interview questions: {e}")
             return self._mock_interview_questions(job_title)
 
-    def _mock_proposal(self, job_title: str, skills: List[str]) -> str:
-        skill_str = ", ".join(skills[:3])
-        return f"Hi there!\n\nI'm very interested in your '{job_title}' project. With my expertise in {skill_str}, I am confident I can deliver high-quality results. I have experience working on similar projects and I'm ready to start immediately. Let's discuss how I can help your project succeed!\n\nBest regards."
+    def _mock_proposal(self, job_title: str, job_description: str, skills: List[str]) -> str:
+        skill_str = ", ".join(skills[:3]) if skills else "relevant technologies"
+        all_skills = ", ".join(skills) if skills else "industry-standard tools"
+        snippet = " ".join(job_description.split())[:120] + "..." if job_description else "the core tasks outlined in your project requirements"
+        
+        return (
+            f"Dear Hiring Manager,\n\n"
+            f"I am writing to express my strong interest in the {job_title} position. "
+            f"Having reviewed the project requirements detailing '{snippet}', I am incredibly excited about the "
+            f"prospect of bringing my expertise to your team.\n\n"
+            f"With a proven track record of delivering high-impact solutions and a robust background in {skill_str}, "
+            f"I am fully confident in my ability to immediately add value and help you achieve your goals. "
+            f"Throughout my career, I have successfully executed complex, data-driven projects that demanded meticulous "
+            f"attention to detail and highly scalable architecture. My deep proficiency in {all_skills} enables me to tackle "
+            f"both technical and functional challenges from multiple angles, ensuring resilient and innovative outcomes.\n\n"
+            f"I consistently pride myself on developing clean, maintainable systems and building products that offer exceptional user experiences, "
+            f"which aligns perfectly with the objectives of your {job_title} initiative. In my past roles, "
+            f"I have optimized performance, resolved critical bottlenecks early in the development lifecycle, and "
+            f"implemented modernized large-scale workflows seamlessly. I am deeply passionate about "
+            f"translating your complex business requirements into tangible metrics of success.\n\n"
+            f"I would welcome the opportunity to discuss how my tailored skills in {skill_str} can be effectively leveraged to "
+            f"accelerate your timeline and ensure the highest quality results for your platform. Thank you for considering my application. "
+            f"I genuinely look forward to the possibility of collaborating with you on this exciting project.\n\n"
+            f"Best regards,\n[Your Name]"
+        )
 
     def _mock_job_description(self, title: str, industry: str) -> dict:
         return {
