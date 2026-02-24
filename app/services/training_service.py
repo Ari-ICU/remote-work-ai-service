@@ -25,18 +25,70 @@ class TrainingService:
         os.makedirs(self.data_dir, exist_ok=True)
 
     def _generate_dummy_data(self) -> pd.DataFrame:
-        """Generate some synthetic data for demonstration"""
+        """Generate a large synthetic dataset for demonstration"""
+        np.random.seed(42)
+        n_samples = 5000
+        
+        domains = [
+            ("Python, FastAPI, Docker", 100000),
+            ("React, TypeScript, CSS", 90000),
+            ("Marketing, SEO, Content Writing", 70000),
+            ("Design, Figma, Adobe XD", 80000),
+            ("Accounting, Finance, Excel", 75000),
+            ("Java, Spring Boot, PostgreSQL", 95000),
+            ("Go, Kubernetes, Microservices", 110000),
+            ("Sales, B2B, CRM", 65000),
+            ("Data Science, Machine Learning, Python", 115000),
+            ("HR, Recruitment, Employee Relations", 60000),
+            ("Project Management, Agile, Scrum", 85000),
+            ("Customer Support, Zendesk, Communication", 50000),
+        ]
+        
+        experience_multipliers = {
+            "entry": 0.7,
+            "mid": 1.0,
+            "senior": 1.4,
+            "lead": 1.8
+        }
+        locations = ["Remote", "NY", "SF", "London", "Berlin", "Singapore", "Phnom Penh", "Bangkok"]
+        location_multipliers = {
+            "SF": 1.3,
+            "NY": 1.2,
+            "London": 1.1,
+            "Remote": 0.9,
+            "Berlin": 1.0,
+            "Singapore": 1.1,
+            "Phnom Penh": 0.4,
+            "Bangkok": 0.5
+        }
+        
+        skills_chosen = []
+        exp_chosen = []
+        loc_chosen = []
+        salaries = []
+        
+        for _ in range(n_samples):
+            domain_idx = np.random.choice(len(domains))
+            skill, base_salary = domains[domain_idx]
+            
+            exp = np.random.choice(list(experience_multipliers.keys()), p=[0.2, 0.4, 0.3, 0.1])
+            loc = np.random.choice(locations)
+            
+            # Calculate salary with some noise
+            salary = base_salary * experience_multipliers[exp] * location_multipliers[loc]
+            noise = np.random.normal(0, 0.1) # 10% noise
+            salary = salary * (1 + noise)
+            
+            skills_chosen.append(skill)
+            exp_chosen.append(exp)
+            loc_chosen.append(loc)
+            salaries.append(int(salary))
+            
         data = {
-            "skills": [
-                "Python, FastAPI, Docker",
-                "React, TypeScript, CSS",
-                "Python, Machine Learning, SQL",
-                "JavaScript, Node.js, AWS",
-                "Java, Spring Boot, PostgreSQL"
-            ] * 20,
-            "experience_level": ["entry", "mid", "senior", "mid", "senior"] * 20,
-            "location": ["Remote", "NY", "SF", "Remote", "London"] * 20,
-            "salary": [60000, 80000, 120000, 90000, 130000] * 20
+            "skills": skills_chosen,
+            "experience_level": exp_chosen,
+            "location": loc_chosen,
+            "salary": salaries
         }
         return pd.DataFrame(data)
 
