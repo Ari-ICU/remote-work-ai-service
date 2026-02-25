@@ -7,6 +7,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message: str
     locale: str = "en"
+    context: str = None
 
 class ChatResponse(BaseModel):
     reply: str
@@ -16,5 +17,5 @@ def get_chat_service():
 
 @router.post("/", response_model=ChatResponse)
 async def chat(request: ChatRequest, service: ChatService = Depends(get_chat_service)):
-    reply = await service.get_response(request.message, request.locale)
+    reply = await service.get_response(request.message, request.locale, request.context)
     return ChatResponse(reply=reply)

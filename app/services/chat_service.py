@@ -112,7 +112,7 @@ class ChatService:
             logger.error(f"Error loading intent model: {str(e)}")
             return None
 
-    async def get_response(self, message: str, locale: str = "en") -> str:
+    async def get_response(self, message: str, locale: str = "en", context: str = None) -> str:
         message_low = message.lower().strip()
         
         if not message_low:
@@ -165,11 +165,11 @@ class ChatService:
         if self.client:
             try:
                 logger.info(f"Using OpenAI fallback for message: {message[:50]}... Locale: {locale}")
-                lang_instruction = "Respond in Khmer language." if locale == "km" else "Respond in English."
+                context_info = f" The user is currently on the page: {context}." if context else ""
                 response = self.client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
-                        {"role": "system", "content": f"You are the AI assistant for KhmerWork, a premium freelance platform in Cambodia. {lang_instruction} Use this info to help: {str(self.knowledge_base)}. Be helpful, professional, and concise. If you don't know something about the platform specifically, give a general helpful freelance advice."},
+                        {"role": "system", "content": f"You are the AI assistant for KhmerWork, a premium freelance platform in Cambodia. {lang_instruction}{context_info} Use this info to help: {str(self.knowledge_base)}. Be helpful, professional, and concise. If you don't know something about the platform specifically, give a general helpful freelance advice."},
                         {"role": "user", "content": message}
                     ],
                     temperature=0.7,
